@@ -1,14 +1,10 @@
-"use client";
-import React, { useEffect, useState } from 'react';
-//import Voting from './components/Voting';
-import Image from 'next/image';
-//import { ethers } from 'ethers';
-//import Voting from '../app/components/Voting';
-//import abi from '../contracts/MemeDAO.json';
+"use client"; // Ensures the component is rendered on the client side
+import React, { useEffect, useState } from 'react'; // Import necessary hooks for state management and lifecycle methods
 
-//const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_MEME_DAO_CONTRACT;
-const MEME_API_URL = 'https://meme-api.com/gimme/wholesomememes';
+import Image from 'next/image'; // Import Next.js Image component for optimized image rendering
+const MEME_API_URL = 'https://meme-api.com/gimme/wholesomememes'; // URL to fetch memes from the meme API
 
+// Define the Meme interface for TypeScript type-checking
 interface Meme {
   postLink: string;
   subreddit: string;
@@ -19,96 +15,99 @@ interface Meme {
   author: string;
   ups: number;
   preview: string[];
-  points: number; // Add points property to Meme interface
-  voted: boolean; // Add voted property to Meme interface
+  points: number; // Tracks the points assigned to a meme
+  voted: boolean; // Indicates if the meme has already been voted on
 }
 
 const MemePage = () => {
+  // State to hold the current meme being displayed
   const [currentMeme, setCurrentMeme] = useState<Meme | null>(null);
+  // State to maintain the leaderboard of memes
   const [leaderboard, setLeaderboard] = useState<Meme[]>([]);
+  // State to manage loading status
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Fetch memes from the meme API
+  // Function to fetch a new meme from the API
   const fetchMeme = async () => {
-    setLoading(true);
-    const response = await fetch(MEME_API_URL);
-    const data = await response.json();
-    const newMeme = { ...data, points: 0, voted: false };
-    setCurrentMeme(newMeme);
-    setLeaderboard((prevLeaderboard) => [...prevLeaderboard, newMeme]);
-    setLoading(false);
+    setLoading(true); // Start the loading state
+    const response = await fetch(MEME_API_URL); // Fetch meme data from the API
+    const data = await response.json(); // Parse JSON response
+    const newMeme = { ...data, points: 0, voted: false }; // Add default points and voted properties
+    setCurrentMeme(newMeme); // Set the new meme as the current meme
+    setLeaderboard((prevLeaderboard) => [...prevLeaderboard, newMeme]); // Update the leaderboard with the new meme
+    setLoading(false); // Stop the loading state
   };
 
-  // Fetch a meme when the component mounts
+  // useEffect to fetch a meme when the component mounts
   useEffect(() => {
-    fetchMeme();
-  }, []);
+    fetchMeme(); // Fetch the initial meme
+  }, []); // Empty dependency array ensures this runs only once
 
-  // Handle voting
+  // Function to handle voting on the current meme
   const handleVote = (points: number) => {
     if (currentMeme) {
-      const updatedMeme = { ...currentMeme, points: currentMeme.points + points, voted: true };
-      setCurrentMeme(updatedMeme);
+      const updatedMeme = { ...currentMeme, points: currentMeme.points + points, voted: true }; // Update points and voting status
+      setCurrentMeme(updatedMeme); // Update the state with the new meme data
       setLeaderboard((prevLeaderboard) =>
         prevLeaderboard.map((meme) =>
-          meme.url === currentMeme.url ? updatedMeme : meme
+          meme.url === currentMeme.url ? updatedMeme : meme // Replace the updated meme in the leaderboard
         )
       );
     }
   };
 
-  // Sort memes by points in descending order
+  // Sort the leaderboard memes by points in descending order
   const sortedLeaderboard = [...leaderboard].sort((a, b) => b.points - a.points);
 
   return (
-    <div className='justify-center bg-gray-900 w-full h-full'>
-      <h1 className='text-6xl text-center justify-center mb-10 py-20'>MemeVoter</h1>
+    <div className='justify-center bg-gray-900 w-full h-full'> {/* Main container */}
+      <h1 className='text-6xl text-center justify-center mb-10 py-20'>MemeVoter</h1> {/* Title */}
       {loading ? (
-        <p className='text-center'>Loading...</p>
+        <p className='text-center'>Loading...</p> // Display loading message while memes are fetched
       ) : (
         currentMeme && (
-          <div className='flex flex-col items-center justify-center'>
-            <Image src={currentMeme.url} alt={currentMeme.title} width={400} height={400} className='items-center justify-center' />
-            <p className='mt-10 text-xl'>{currentMeme.title}</p>
-            <div className='flex space-x-4 mt-4'>
+          <div className='flex flex-col items-center justify-center'> {/* Meme display section */}
+            <Image src={currentMeme.url} alt={currentMeme.title} width={400} height={400} className='items-center justify-center' /> {/* Display meme image */}
+            <p className='mt-10 text-xl'>{currentMeme.title}</p> {/* Display meme title */}
+            <div className='flex space-x-4 mt-4'> {/* Voting buttons */}
               <button
-                onClick={() => handleVote(3)}
+                onClick={() => handleVote(3)} // Like button gives 3 points
                 className='bg-green-500 text-white px-4 py-2 rounded'
-                disabled={currentMeme.voted}
+                disabled={currentMeme.voted} // Disable if already voted
               >
                 Like
               </button>
               <button
-                onClick={() => handleVote(1)}
+                onClick={() => handleVote(1)} // Ok button gives 1 point
                 className='bg-yellow-500 text-white px-4 py-2 rounded'
                 disabled={currentMeme.voted}
               >
                 Ok
               </button>
               <button
-                onClick={() => handleVote(0)}
+                onClick={() => handleVote(0)} // Dislike button gives 0 points
                 className='bg-red-500 text-white px-4 py-2 rounded'
                 disabled={currentMeme.voted}
               >
                 Dislike
               </button>
             </div>
-            <p className='mt-4 text-xl'>Points: {currentMeme.points}</p>
+            <p className='mt-4 text-xl'>Points: {currentMeme.points}</p> {/* Display points */}
           </div>
         )
       )}
-      <div className='flex justify-center mt-10'>
+      <div className='flex justify-center mt-10'> {/* Button to generate a new meme */}
         <button onClick={fetchMeme} className='bg-red-300 text-4xl border-2 rounded-xl items-center place-content-center justify-center mb-10 px-4 py-2'>
           Generate
         </button>
       </div>
-      <div className='mt-10'>
+      <div className='mt-10'> {/* Leaderboard display */}
         <h2 className='text-4xl text-center mb-4'>Leaderboard</h2>
         <div className='flex flex-col items-center'>
-          {sortedLeaderboard.map((meme, index) => (
+          {sortedLeaderboard.map((meme, index) => ( // Display each meme in the leaderboard
             <div key={index} className='flex justify-between w-1/2 bg-gray-800 p-4 mb-2 rounded'>
-              <span className='text-white'>{meme.title}</span>
-              <span className='text-white'>{meme.points} points</span>
+              <span className='text-white'>{meme.title}</span> {/* Meme title */}
+              <span className='text-white'>{meme.points} points</span> {/* Meme points */}
             </div>
           ))}
         </div>
@@ -116,6 +115,3 @@ const MemePage = () => {
     </div>
   );
 };
-
-export default MemePage;
-//<Voting memeId={index + 1} />
